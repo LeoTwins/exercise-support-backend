@@ -1,12 +1,12 @@
-package repository
+package persistance
 
 import (
 	"context"
 	"errors"
 
-	domain "github.com/LeoTwins/go-clean-architecture/internal/domain/model"
+	"github.com/LeoTwins/go-clean-architecture/internal/domain/model"
 	"github.com/LeoTwins/go-clean-architecture/internal/domain/repository"
-	dbModel "github.com/LeoTwins/go-clean-architecture/internal/infrastructure/repository/model"
+	"github.com/LeoTwins/go-clean-architecture/internal/infrastructure/persistance/table"
 	"gorm.io/gorm"
 )
 
@@ -18,8 +18,8 @@ func NewAccountRepository(db *gorm.DB) repository.IAccountRepository {
 	return &accountRepository{db}
 }
 
-func (ar *accountRepository) FindByID(ctx context.Context, id uint) (*domain.Account, error) {
-	var dbAcc dbModel.Account
+func (ar *accountRepository) FindByID(ctx context.Context, id uint) (*model.Account, error) {
+	var dbAcc table.Account
 	result := ar.db.First(&dbAcc, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -28,12 +28,12 @@ func (ar *accountRepository) FindByID(ctx context.Context, id uint) (*domain.Acc
 		return nil, result.Error
 	}
 
-	money, err := domain.NewMoney(dbAcc.Balance)
+	money, err := model.NewMoney(dbAcc.Balance)
 	if err != nil {
 		return nil, err
 	}
 
-	acc, err := domain.NewAccount(dbAcc.ID, dbAcc.Name, *money)
+	acc, err := model.NewAccount(dbAcc.ID, dbAcc.Name, *money)
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +41,8 @@ func (ar *accountRepository) FindByID(ctx context.Context, id uint) (*domain.Acc
 	return acc, nil
 }
 
-func (ar *accountRepository) Save(ctx context.Context, acc *domain.Account) error {
-	dbAcc := dbModel.Account{
+func (ar *accountRepository) Save(ctx context.Context, acc *model.Account) error {
+	dbAcc := table.Account{
 		Name:    acc.Name,
 		Balance: acc.Balance.Value().Uint(),
 	}
@@ -55,8 +55,8 @@ func (ar *accountRepository) Save(ctx context.Context, acc *domain.Account) erro
 	return nil
 }
 
-func (ar *accountRepository) Update(ctx context.Context, acc *domain.Account) error {
-	dbAcc := dbModel.Account{
+func (ar *accountRepository) Update(ctx context.Context, acc *model.Account) error {
+	dbAcc := table.Account{
 		ID:      acc.ID,
 		Name:    acc.Name,
 		Balance: acc.Balance.Value().Uint(),
